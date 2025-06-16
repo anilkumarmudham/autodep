@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autodep-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: autodep
+  template:
+    metadata:
+      labels:
+        app: autodep
+    spec:
+      containers:
+      - name: autodep-container
+        image: <your-ecr-url>:latest
+        ports:
+        - containerPort: 80
