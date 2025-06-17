@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: autodep-container
-        image: <your-ecr-url>:latest
+        image: 060795905397.dkr.ecr.us-east-1.amazonaws.com/autodep:latest
         ports:
         - containerPort: 80
