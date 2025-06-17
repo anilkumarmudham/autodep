@@ -21,21 +21,22 @@ jobs:
 
     - name: Login to Amazon ECR
       run: |
-        aws ecr get-login-password | docker login --username AWS --password-stdin           ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
+        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
 
     - name: Build and push Docker image
       run: |
-        IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
+        IMAGE_TAG=${{ github.sha }}
+        IMAGE_URI=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:$IMAGE_TAG
+
         docker build -t $IMAGE_URI .
         docker push $IMAGE_URI
+
         echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
 
-    - name: Update Kubeconfig
+    - name: Update kubeconfig for EKS
       run: |
-        aws eks update-kubeconfig --name ${{ secrets.EKS_CLUSTER_NAME }} --region ${{ secrets.AWS_REGION }}
+        aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name ${{ secrets.EKS_CLUSTER_NAME }}
 
-    - name: Deploy to EKS
+    - name: Update deployment image in EKS
       run: |
-        sed -i "s|<your-ecr-url>|$IMAGE_URI|g" deployment.yaml
-        kubectl apply -f deployment.yaml
-        kubectl apply -f service.yaml
+        kubectl set image deployment/autodep-deployment autodep-container=$IMAGE_URI
